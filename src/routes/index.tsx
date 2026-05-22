@@ -66,7 +66,7 @@ function Home() {
         quiz.questions.some((qq) => qq.question.toLowerCase().includes(q))
       );
     });
-  }, [activeQuizzes, search, activeCategory, activeDifficulty]);
+  }, [activeQuizzes, search, activeCategory]);
 
   async function handleFile(file: File) {
     setError(null);
