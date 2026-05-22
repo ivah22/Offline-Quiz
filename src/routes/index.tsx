@@ -153,7 +153,7 @@ function Home() {
             <Upload className="size-6" />
           </div>
           <h2 className="text-base font-semibold">{busy ? "Parsing..." : "Drop .xlsx or tap to browse"}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">A–F required · G Category · H Difficulty · I Points (optional)</p>
+          <p className="mt-1 text-xs text-muted-foreground">A–F required · G Category · H Points (optional)</p>
           <input ref={inputRef} type="file" accept=".xlsx" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
           {error && <p className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
