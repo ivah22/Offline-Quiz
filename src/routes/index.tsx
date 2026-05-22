@@ -5,7 +5,7 @@ import {
   Upload, Search, Settings as SettingsIcon, History as HistoryIcon,
   Trash2, Sun, Moon, HardDrive, Database, Tag, Play, RotateCcw,
 } from "lucide-react";
-import { db, quizDifficulty, quizTotalPoints, type Quiz } from "@/lib/db";
+import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { parseExcelFile } from "@/lib/excel";
 import { useSettings, toggleTheme } from "@/lib/settings";
 import { getStorageEstimate, formatBytes } from "@/lib/storage";
