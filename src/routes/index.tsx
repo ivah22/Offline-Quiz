@@ -5,7 +5,7 @@ import {
   Upload, Search, Settings as SettingsIcon, History as HistoryIcon,
   Trash2, Sun, Moon, HardDrive, Database, Tag, Play, RotateCcw,
 } from "lucide-react";
-import { db, quizDifficulty, quizTotalPoints, type Quiz } from "@/lib/db";
+import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { parseExcelFile } from "@/lib/excel";
 import { useSettings, toggleTheme } from "@/lib/settings";
 import { getStorageEstimate, formatBytes } from "@/lib/storage";
@@ -27,7 +27,7 @@ function Home() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [activeDifficulty, setActiveDifficulty] = useState<string>("All");
+  
   const [confirm, setConfirm] = useState<Quiz | null>(null);
   const [storage, setStorage] = useState({ usage: 0, quota: 0 });
 
@@ -58,7 +58,7 @@ function Home() {
     const q = search.trim().toLowerCase();
     return activeQuizzes.filter((quiz) => {
       if (activeCategory !== "All" && quiz.category !== activeCategory) return false;
-      if (activeDifficulty !== "All" && quizDifficulty(quiz) !== activeDifficulty) return false;
+      
       if (!q) return true;
       return (
         quiz.title.toLowerCase().includes(q) ||
@@ -66,7 +66,7 @@ function Home() {
         quiz.questions.some((qq) => qq.question.toLowerCase().includes(q))
       );
     });
-  }, [activeQuizzes, search, activeCategory, activeDifficulty]);
+  }, [activeQuizzes, search, activeCategory]);
 
   async function handleFile(file: File) {
     setError(null);
@@ -76,11 +76,10 @@ function Home() {
     }
     setBusy(true);
     try {
-      const { questions, category, difficulty } = await parseExcelFile(file);
+      const { questions, category } = await parseExcelFile(file);
       const id = await db.quizzes.add({
         title: file.name.replace(/\.xlsx$/i, ""),
         category,
-        difficulty,
         questions,
         fileData: file,
         createdAt: Date.now(),
@@ -154,7 +153,7 @@ function Home() {
             <Upload className="size-6" />
           </div>
           <h2 className="text-base font-semibold">{busy ? "Parsing..." : "Drop .xlsx or tap to browse"}</h2>
-          <p className="mt-1 text-xs text-muted-foreground">A–F required · G Category · H Difficulty · I Points (optional)</p>
+          <p className="mt-1 text-xs text-muted-foreground">A–F required · G Category · H Points (optional)</p>
           <input ref={inputRef} type="file" accept=".xlsx" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }} />
           {error && <p className="mt-3 rounded-xl bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</p>}
@@ -201,16 +200,6 @@ function Home() {
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {["All", "Easy", "Medium", "Hard"].map((d) => (
-              <button key={d} onClick={() => setActiveDifficulty(d)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                  activeDifficulty === d ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-accent"
-                }`}>
-                {d === "All" ? "Any difficulty" : d}
-              </button>
-            ))}
-          </div>
         </section>
 
         <section className="mt-6">
@@ -227,9 +216,7 @@ function Home() {
 
           <ul className="space-y-3">
             {filtered.map((q) => {
-              const diff = quizDifficulty(q);
               const pts = quizTotalPoints(q);
-              const diffColor = diff === "Easy" ? "bg-success/15 text-success" : diff === "Hard" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary";
               return (
                 <li key={q.id} className="rounded-2xl border bg-card p-4 shadow-card transition hover:shadow-soft">
                   <div className="flex items-start gap-3">
@@ -240,7 +227,6 @@ function Home() {
                       <p className="truncate font-semibold">{q.title}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
                         {q.category && <span className="rounded-full bg-muted px-2 py-0.5">{q.category}</span>}
-                        <span className={`rounded-full px-2 py-0.5 font-medium ${diffColor}`}>{diff}</span>
                         <span className="text-muted-foreground">{pts} pts</span>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">{new Date(q.createdAt).toLocaleDateString()}</p>
