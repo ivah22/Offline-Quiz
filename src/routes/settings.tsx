@@ -1,12 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, KeyRound } from "lucide-react";
 import { useSettings, setSettings, defaultSettings } from "@/lib/settings";
+import { changeAdminPassword, useSession } from "@/lib/auth";
 import { sfx } from "@/lib/sound";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 function SettingsPage() {
   const s = useSettings();
+  const { session } = useSession();
+
 
   return (
     <div className="min-h-screen pb-16">
