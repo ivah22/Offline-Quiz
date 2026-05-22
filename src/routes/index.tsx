@@ -4,16 +4,19 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   Upload, Search, Settings as SettingsIcon, History as HistoryIcon,
   Trash2, Sun, Moon, HardDrive, Database, Tag, Play, RotateCcw,
+  Shield, LogOut, User as UserIcon,
 } from "lucide-react";
 import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { parseExcelFile } from "@/lib/excel";
 import { useSettings, toggleTheme } from "@/lib/settings";
+import { useSession, logout } from "@/lib/auth";
 import { getStorageEstimate, formatBytes } from "@/lib/storage";
 import { backupAllQuizzes, restoreFromBackup } from "@/lib/export";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+
 
 export const Route = createFileRoute("/")({ component: Home });
 
