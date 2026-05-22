@@ -16,6 +16,8 @@ export interface Quiz {
   fileData?: Blob;
   createdAt: number;
   deletedAt?: number | null;
+  createdByUserId?: number;
+  createdByName?: string;
 }
 
 export interface Attempt {
@@ -32,11 +34,24 @@ export interface Attempt {
   passed: boolean;
   durationSec: number;
   completedAt: number;
+  takenByUserId?: number;
+  takenByName?: string;
+}
+
+export interface User {
+  id?: number;
+  username: string;
+  fullName: string;
+  role: "admin" | "user";
+  passwordHash: string;
+  salt: string;
+  createdAt: number;
 }
 
 class QuizDB extends Dexie {
   quizzes!: Table<Quiz, number>;
   attempts!: Table<Attempt, number>;
+  users!: Table<User, number>;
 
   constructor() {
     super("QuizDB");
@@ -51,6 +66,11 @@ class QuizDB extends Dexie {
       await tx.table("quizzes").toCollection().modify((q) => {
         if (q.deletedAt === undefined) q.deletedAt = null;
       });
+    });
+    this.version(3).stores({
+      quizzes: "++id, title, category, createdAt, deletedAt, createdByUserId",
+      attempts: "++id, quizId, completedAt, takenByUserId",
+      users: "++id, &username, role, createdAt",
     });
   }
 }
