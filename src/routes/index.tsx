@@ -76,11 +76,10 @@ function Home() {
     }
     setBusy(true);
     try {
-      const { questions, category, difficulty } = await parseExcelFile(file);
+      const { questions, category } = await parseExcelFile(file);
       const id = await db.quizzes.add({
         title: file.name.replace(/\.xlsx$/i, ""),
         category,
-        difficulty,
         questions,
         fileData: file,
         createdAt: Date.now(),
