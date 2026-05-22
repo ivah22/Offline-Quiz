@@ -68,11 +68,14 @@ function HistoryPage() {
                   }`}>{a.percentage}%</div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold">{a.quizTitle || quizMap.get(a.quizId) || "Quiz"}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(a.completedAt).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">
+                      Taken by <span className="font-medium text-foreground">{a.takenByName ?? "Unknown"}</span> · {new Date(a.completedAt).toLocaleString()}
+                    </p>
                     <p className={`text-xs font-medium ${color}`}>
                       {a.score}/{a.total} correct · {a.points}/{a.maxPoints} pts · {a.passed ? "Passed" : "Failed"}
                     </p>
                   </div>
+
                   <Link to="/results/$attemptId" params={{ attemptId: String(a.id) }}
                     className="rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-soft">
                     Review

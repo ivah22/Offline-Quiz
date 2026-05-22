@@ -4,10 +4,12 @@ import { useLiveQuery } from "dexie-react-hooks";
 import {
   Upload, Search, Settings as SettingsIcon, History as HistoryIcon,
   Trash2, Sun, Moon, HardDrive, Database, Tag, Play, RotateCcw,
+  Shield, LogOut, User as UserIcon,
 } from "lucide-react";
 import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { parseExcelFile } from "@/lib/excel";
 import { useSettings, toggleTheme } from "@/lib/settings";
+import { useSession, logout } from "@/lib/auth";
 import { getStorageEstimate, formatBytes } from "@/lib/storage";
 import { backupAllQuizzes, restoreFromBackup } from "@/lib/export";
 import {
@@ -15,13 +17,16 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+
 export const Route = createFileRoute("/")({ component: Home });
 
 function Home() {
   const navigate = useNavigate();
   const settings = useSettings();
+  const { session } = useSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const restoreRef = useRef<HTMLInputElement>(null);
+
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,13 +82,17 @@ function Home() {
     setBusy(true);
     try {
       const { questions, category } = await parseExcelFile(file);
+      const base = file.name.replace(/\.xlsx$/i, "");
+      const creatorName = session?.fullName ?? "Unknown";
       const id = await db.quizzes.add({
-        title: file.name.replace(/\.xlsx$/i, ""),
+        title: `${base} — Quiz by ${creatorName}`,
         category,
         questions,
         fileData: file,
         createdAt: Date.now(),
         deletedAt: null,
+        createdByUserId: session?.userId,
+        createdByName: creatorName,
       });
       navigate({ to: "/quiz/$id", params: { id: String(id) } });
     } catch (e) {
@@ -92,6 +101,7 @@ function Home() {
       setBusy(false);
     }
   }
+
 
   async function trashQuiz(id: number) {
     await db.quizzes.update(id, { deletedAt: Date.now() });
@@ -110,34 +120,49 @@ function Home() {
 
   return (
     <div className="min-h-screen pb-16">
-      <header className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-5 pt-8">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-primary shadow-soft text-primary-foreground font-bold">QV</div>
-          <div>
-            <h1 className="text-xl font-bold">Quiz Vault</h1>
-            <p className="text-xs text-muted-foreground">Offline · Personal</p>
+      <header className="mx-auto max-w-3xl px-4 pt-6 sm:px-5 sm:pt-8">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-2xl bg-gradient-primary shadow-soft text-primary-foreground font-bold">QV</div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-bold sm:text-xl">Quiz Vault</h1>
+              <p className="truncate text-xs text-muted-foreground">
+                <UserIcon className="mr-1 inline size-3" />
+                {session?.fullName} · {session?.role}
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            {session?.role === "admin" && (
+              <Link to="/admin"
+                className="inline-flex items-center gap-1 rounded-full border bg-card px-3 py-2 text-xs font-medium shadow-card hover:bg-accent">
+                <Shield className="size-3.5" /> Admin
+              </Link>
+            )}
+            <Link to="/history" className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="History">
+              <HistoryIcon className="size-4" />
+            </Link>
+            <Link to="/trash" className="relative rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Trash">
+              <Trash2 className="size-4" />
+              {trashedCount > 0 && (
+                <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                  {trashedCount}
+                </span>
+              )}
+            </Link>
+            <Link to="/settings" className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Settings">
+              <SettingsIcon className="size-4" />
+            </Link>
+            <button onClick={toggleTheme} className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Toggle theme">
+              {settings.theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+            </button>
+            <button onClick={logout} className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Sign out">
+              <LogOut className="size-4" />
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Link to="/history" className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="History">
-            <HistoryIcon className="size-4" />
-          </Link>
-          <Link to="/trash" className="relative rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Trash">
-            <Trash2 className="size-4" />
-            {trashedCount > 0 && (
-              <span className="absolute -right-1 -top-1 grid h-4 min-w-4 place-items-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
-                {trashedCount}
-              </span>
-            )}
-          </Link>
-          <Link to="/settings" className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Settings">
-            <SettingsIcon className="size-4" />
-          </Link>
-          <button onClick={toggleTheme} className="rounded-full border bg-card p-2.5 shadow-card hover:bg-accent" aria-label="Toggle theme">
-            {settings.theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-          </button>
-        </div>
       </header>
+
 
       <main className="mx-auto max-w-3xl px-5 pt-8">
         <section
@@ -228,9 +253,11 @@ function Home() {
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
                         {q.category && <span className="rounded-full bg-muted px-2 py-0.5">{q.category}</span>}
                         <span className="text-muted-foreground">{pts} pts</span>
+                        {q.createdByName && <span className="text-muted-foreground">· by {q.createdByName}</span>}
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">{new Date(q.createdAt).toLocaleDateString()}</p>
                     </div>
+
                     <div className="flex flex-col gap-1.5">
                       <Link to="/quiz/$id" params={{ id: String(q.id) }}
                         className="inline-flex items-center gap-1 rounded-xl bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-soft active:scale-95">
