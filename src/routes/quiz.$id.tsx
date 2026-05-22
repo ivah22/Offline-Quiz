@@ -4,8 +4,10 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { ArrowLeft, Clock, Tag, Trophy, Hash } from "lucide-react";
 import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { useSettings } from "@/lib/settings";
+import { useSession } from "@/lib/auth";
 import { shuffle } from "@/lib/shuffle";
 import { sfx } from "@/lib/sound";
+
 
 export const Route = createFileRoute("/quiz/$id")({ component: QuizPage });
 
@@ -135,7 +137,9 @@ function QuizRunner({
   quiz, settings, limit, onCancel,
 }: { quiz: Quiz; settings: ReturnType<typeof useSettings>; limit: number; onCancel: () => void }) {
   const navigate = useNavigate();
+  const { session } = useSession();
   const startedAt = useRef(Date.now());
+
 
   const order = useMemo(() => {
     let idxs = quiz.questions.map((_, i) => i);
@@ -225,9 +229,12 @@ function QuizRunner({
       passed,
       durationSec: Math.round((Date.now() - startedAt.current) / 1000),
       completedAt: Date.now(),
+      takenByUserId: session?.userId,
+      takenByName: session?.fullName ?? "Unknown",
     });
     navigate({ to: "/results/$attemptId", params: { attemptId: String(attemptId) } });
   }
+
 
   const progress = ((idx + 1) / order.length) * 100;
   const allAnswered = answers.every((a) => a !== null);
