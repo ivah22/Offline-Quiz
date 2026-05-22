@@ -4,7 +4,6 @@ import type { Question } from "./db";
 export interface ParsedQuiz {
   questions: Question[];
   category?: string;
-  difficulty?: "Easy" | "Medium" | "Hard";
 }
 
 export async function parseExcelFile(file: File): Promise<ParsedQuiz> {
@@ -26,7 +25,6 @@ export async function parseExcelFile(file: File): Promise<ParsedQuiz> {
 
   const questions: Question[] = [];
   const categoryCounts: Record<string, number> = {};
-  const diffCounts: Record<string, number> = {};
 
   for (let i = start; i < rows.length; i++) {
     const r = rows[i];
@@ -49,25 +47,17 @@ export async function parseExcelFile(file: File): Promise<ParsedQuiz> {
     }
 
     const category = String(r[6] ?? "").trim() || undefined;
-    const diffRaw = String(r[7] ?? "").trim().toLowerCase();
-    let difficulty: "Easy" | "Medium" | "Hard" | undefined;
-    if (diffRaw.startsWith("e")) difficulty = "Easy";
-    else if (diffRaw.startsWith("h")) difficulty = "Hard";
-    else if (diffRaw.startsWith("m")) difficulty = "Medium";
-    const pointsRaw = Number(r[8] ?? "");
+    const pointsRaw = Number(r[7] ?? "");
     const points = Number.isFinite(pointsRaw) && pointsRaw > 0 ? pointsRaw : 1;
 
     if (category) categoryCounts[category] = (categoryCounts[category] ?? 0) + 1;
-    if (difficulty) diffCounts[difficulty] = (diffCounts[difficulty] ?? 0) + 1;
 
-    questions.push({ question: q, choices, correct: correctText, category, difficulty, points });
+    questions.push({ question: q, choices, correct: correctText, category, points });
   }
 
   if (!questions.length) throw new Error("No valid questions found");
 
   const topCat = Object.entries(categoryCounts).sort((a, b) => b[1] - a[1])[0]?.[0];
-  const topDiff = Object.entries(diffCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as
-    | "Easy" | "Medium" | "Hard" | undefined;
 
-  return { questions, category: topCat, difficulty: topDiff };
+  return { questions, category: topCat };
 }
