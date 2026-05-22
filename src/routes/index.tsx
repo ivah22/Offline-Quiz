@@ -217,9 +217,7 @@ function Home() {
 
           <ul className="space-y-3">
             {filtered.map((q) => {
-              const diff = quizDifficulty(q);
               const pts = quizTotalPoints(q);
-              const diffColor = diff === "Easy" ? "bg-success/15 text-success" : diff === "Hard" ? "bg-destructive/15 text-destructive" : "bg-primary/15 text-primary";
               return (
                 <li key={q.id} className="rounded-2xl border bg-card p-4 shadow-card transition hover:shadow-soft">
                   <div className="flex items-start gap-3">
@@ -230,7 +228,6 @@ function Home() {
                       <p className="truncate font-semibold">{q.title}</p>
                       <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px]">
                         {q.category && <span className="rounded-full bg-muted px-2 py-0.5">{q.category}</span>}
-                        <span className={`rounded-full px-2 py-0.5 font-medium ${diffColor}`}>{diff}</span>
                         <span className="text-muted-foreground">{pts} pts</span>
                       </div>
                       <p className="mt-1 text-xs text-muted-foreground">{new Date(q.createdAt).toLocaleDateString()}</p>
