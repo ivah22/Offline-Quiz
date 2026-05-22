@@ -23,8 +23,10 @@ export const Route = createFileRoute("/")({ component: Home });
 function Home() {
   const navigate = useNavigate();
   const settings = useSettings();
+  const { session } = useSession();
   const inputRef = useRef<HTMLInputElement>(null);
   const restoreRef = useRef<HTMLInputElement>(null);
+
   const [dragOver, setDragOver] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,13 +82,17 @@ function Home() {
     setBusy(true);
     try {
       const { questions, category } = await parseExcelFile(file);
+      const base = file.name.replace(/\.xlsx$/i, "");
+      const creatorName = session?.fullName ?? "Unknown";
       const id = await db.quizzes.add({
-        title: file.name.replace(/\.xlsx$/i, ""),
+        title: `${base} — Quiz by ${creatorName}`,
         category,
         questions,
         fileData: file,
         createdAt: Date.now(),
         deletedAt: null,
+        createdByUserId: session?.userId,
+        createdByName: creatorName,
       });
       navigate({ to: "/quiz/$id", params: { id: String(id) } });
     } catch (e) {
@@ -95,6 +101,7 @@ function Home() {
       setBusy(false);
     }
   }
+
 
   async function trashQuiz(id: number) {
     await db.quizzes.update(id, { deletedAt: Date.now() });
