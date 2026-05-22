@@ -63,6 +63,8 @@ function SettingsPage() {
             onChange={(v) => { setSettings({ soundEffects: v }); if (v) sfx.correct(); }} />
         </Group>
 
+        {session?.role === "admin" && <AdminPasswordCard />}
+
         <button onClick={() => setSettings(defaultSettings)}
           className="w-full rounded-2xl border bg-card py-3 text-sm font-medium shadow-card hover:bg-accent">
           Reset to defaults
@@ -71,6 +73,59 @@ function SettingsPage() {
     </div>
   );
 }
+
+function AdminPasswordCard() {
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setMsg(null);
+    if (next !== confirm) { setMsg({ type: "err", text: "New passwords do not match" }); return; }
+    setBusy(true);
+    try {
+      await changeAdminPassword(current, next);
+      setMsg({ type: "ok", text: "Password updated" });
+      setCurrent(""); setNext(""); setConfirm("");
+    } catch (e) {
+      setMsg({ type: "err", text: e instanceof Error ? e.message : "Failed" });
+    } finally { setBusy(false); }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-3 rounded-2xl border bg-card p-4 shadow-card">
+      <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        <KeyRound className="size-3.5" /> Change admin password
+      </p>
+      <PwdField label="Current password" value={current} onChange={setCurrent} />
+      <PwdField label="New password" value={next} onChange={setNext} />
+      <PwdField label="Confirm new password" value={confirm} onChange={setConfirm} />
+      {msg && (
+        <p className={`rounded-xl px-3 py-2 text-xs ${msg.type === "ok" ? "bg-success/10 text-success" : "bg-destructive/10 text-destructive"}`}>
+          {msg.text}
+        </p>
+      )}
+      <button type="submit" disabled={busy}
+        className="w-full rounded-xl bg-gradient-primary py-2.5 text-sm font-semibold text-primary-foreground shadow-soft disabled:opacity-60">
+        {busy ? "Updating..." : "Update password"}
+      </button>
+    </form>
+  );
+}
+
+function PwdField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
+      <input type="password" value={value} onChange={(e) => onChange(e.target.value)} required
+        className="w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none focus:border-primary" />
+    </label>
+  );
+}
+
 
 function Group({ title, children }: { title: string; children: React.ReactNode }) {
   return (
