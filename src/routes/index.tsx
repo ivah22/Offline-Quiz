@@ -58,7 +58,7 @@ function Home() {
     const q = search.trim().toLowerCase();
     return activeQuizzes.filter((quiz) => {
       if (activeCategory !== "All" && quiz.category !== activeCategory) return false;
-      if (activeDifficulty !== "All" && quizDifficulty(quiz) !== activeDifficulty) return false;
+      
       if (!q) return true;
       return (
         quiz.title.toLowerCase().includes(q) ||
