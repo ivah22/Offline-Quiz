@@ -201,16 +201,6 @@ function Home() {
             ))}
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
-            {["All", "Easy", "Medium", "Hard"].map((d) => (
-              <button key={d} onClick={() => setActiveDifficulty(d)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition ${
-                  activeDifficulty === d ? "border-primary bg-primary text-primary-foreground" : "bg-card hover:bg-accent"
-                }`}>
-                {d === "All" ? "Any difficulty" : d}
-              </button>
-            ))}
-          </div>
         </section>
 
         <section className="mt-6">
