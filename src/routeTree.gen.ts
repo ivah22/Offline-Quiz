@@ -9,10 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TrashRouteImport } from './routes/trash'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as HistoryRouteImport } from './routes/history'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ResultsAttemptIdRouteImport } from './routes/results.$attemptId'
 import { Route as QuizIdRouteImport } from './routes/quiz.$id'
 
+const TrashRoute = TrashRouteImport.update({
+  id: '/trash',
+  path: '/trash',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistoryRoute = HistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +49,88 @@ const QuizIdRoute = QuizIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
+  '/trash': typeof TrashRoute
   '/quiz/$id': typeof QuizIdRoute
   '/results/$attemptId': typeof ResultsAttemptIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
+  '/trash': typeof TrashRoute
   '/quiz/$id': typeof QuizIdRoute
   '/results/$attemptId': typeof ResultsAttemptIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/history': typeof HistoryRoute
+  '/settings': typeof SettingsRoute
+  '/trash': typeof TrashRoute
   '/quiz/$id': typeof QuizIdRoute
   '/results/$attemptId': typeof ResultsAttemptIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/quiz/$id' | '/results/$attemptId'
+  fullPaths:
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/trash'
+    | '/quiz/$id'
+    | '/results/$attemptId'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/quiz/$id' | '/results/$attemptId'
-  id: '__root__' | '/' | '/quiz/$id' | '/results/$attemptId'
+  to:
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/trash'
+    | '/quiz/$id'
+    | '/results/$attemptId'
+  id:
+    | '__root__'
+    | '/'
+    | '/history'
+    | '/settings'
+    | '/trash'
+    | '/quiz/$id'
+    | '/results/$attemptId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  HistoryRoute: typeof HistoryRoute
+  SettingsRoute: typeof SettingsRoute
+  TrashRoute: typeof TrashRoute
   QuizIdRoute: typeof QuizIdRoute
   ResultsAttemptIdRoute: typeof ResultsAttemptIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/trash': {
+      id: '/trash'
+      path: '/trash'
+      fullPath: '/trash'
+      preLoaderRoute: typeof TrashRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/history': {
+      id: '/history'
+      path: '/history'
+      fullPath: '/history'
+      preLoaderRoute: typeof HistoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,6 +157,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  HistoryRoute: HistoryRoute,
+  SettingsRoute: SettingsRoute,
+  TrashRoute: TrashRoute,
   QuizIdRoute: QuizIdRoute,
   ResultsAttemptIdRoute: ResultsAttemptIdRoute,
 }
