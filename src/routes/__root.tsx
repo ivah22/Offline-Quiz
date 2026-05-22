@@ -118,7 +118,29 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Outlet />
+      <AuthGate>
+        <Outlet />
+      </AuthGate>
     </QueryClientProvider>
   );
 }
+
+function AuthGate({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { session, ready } = useSession();
+
+  useEffect(() => { ensureAdminSeeded(); }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    if (!session && pathname !== "/login") {
+      router.navigate({ to: "/login" });
+    }
+  }, [ready, session, pathname, router]);
+
+  if (!ready) return null;
+  if (!session && pathname !== "/login") return null;
+  return <>{children}</>;
+}
+
