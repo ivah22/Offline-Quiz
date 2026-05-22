@@ -1,8 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLiveQuery } from "dexie-react-hooks";
-import { ArrowLeft, Clock, Tag, Trophy, Target, Hash } from "lucide-react";
-import { db, quizDifficulty, quizTotalPoints, type Quiz } from "@/lib/db";
+import { ArrowLeft, Clock, Tag, Trophy, Hash } from "lucide-react";
+import { db, quizTotalPoints, type Quiz } from "@/lib/db";
 import { useSettings } from "@/lib/settings";
 import { shuffle } from "@/lib/shuffle";
 import { sfx } from "@/lib/sound";
@@ -15,21 +15,54 @@ function QuizPage() {
   const settings = useSettings();
   const quiz = useLiveQuery(() => db.quizzes.get(Number(id)), [id]);
   const [started, setStarted] = useState(false);
+  const [questionCount, setQuestionCount] = useState<number | null>(null);
 
   if (!quiz) {
     return <div className="grid min-h-screen place-items-center text-muted-foreground">Loading...</div>;
   }
-  if (!started) return <Preview quiz={quiz} onStart={() => setStarted(true)} />;
-  return <QuizRunner quiz={quiz} settings={settings} onCancel={() => navigate({ to: "/" })} />;
+  if (!started) {
+    return (
+      <Preview
+        quiz={quiz}
+        selected={questionCount}
+        onSelect={setQuestionCount}
+        onStart={() => setStarted(true)}
+      />
+    );
+  }
+  return (
+    <QuizRunner
+      quiz={quiz}
+      settings={settings}
+      limit={questionCount ?? quiz.questions.length}
+      onCancel={() => navigate({ to: "/" })}
+    />
+  );
 }
 
-function Preview({ quiz, onStart }: { quiz: Quiz; onStart: () => void }) {
+function Preview({
+  quiz, selected, onSelect, onStart,
+}: { quiz: Quiz; selected: number | null; onSelect: (n: number) => void; onStart: () => void }) {
   const settings = useSettings();
-  const totalPoints = quizTotalPoints(quiz);
-  const diff = quizDifficulty(quiz);
-  const count = settings.questionLimit > 0
-    ? Math.min(settings.questionLimit, quiz.questions.length)
-    : quiz.questions.length;
+  const total = quiz.questions.length;
+
+  const presets = useMemo(() => {
+    const opts = [5, 10, 20, 50].filter((n) => n < total);
+    return [...opts, total];
+  }, [total]);
+
+  useEffect(() => {
+    if (selected === null) {
+      const def = settings.questionLimit > 0
+        ? Math.min(settings.questionLimit, total)
+        : total;
+      onSelect(def);
+    }
+  }, [selected, settings.questionLimit, total, onSelect]);
+
+  const count = selected ?? total;
+  const totalPointsAll = quizTotalPoints(quiz);
+  const totalPoints = Math.round((totalPointsAll / total) * count);
   const estSec = (settings.timerEnabled ? settings.secondsPerQuestion : 45) * count;
   const minutes = Math.max(1, Math.round(estSec / 60));
 
@@ -47,11 +80,28 @@ function Preview({ quiz, onStart }: { quiz: Quiz; onStart: () => void }) {
           {quiz.category && <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-white/20 px-2.5 py-0.5 text-xs"><Tag className="size-3" />{quiz.category}</p>}
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Stat icon={Hash} label="Questions" value={String(count)} sub={count < quiz.questions.length ? `of ${quiz.questions.length}` : undefined} />
+        <div className="mt-4 rounded-2xl border bg-card p-4 shadow-card">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Hash className="size-3.5" /> Questions
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {presets.map((n) => {
+              const active = count === n;
+              return (
+                <button key={n} onClick={() => onSelect(n)}
+                  className={`rounded-xl border-2 px-4 py-2 text-sm font-semibold transition active:scale-95 ${
+                    active ? "border-primary bg-gradient-primary text-primary-foreground shadow-soft" : "border-border bg-card hover:border-primary/40"
+                  }`}>
+                  {n === total ? `All ${total}` : n}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
           <Stat icon={Trophy} label="Total points" value={String(totalPoints)} />
           <Stat icon={Clock} label="Est. time" value={`${minutes} min`} />
-          <Stat icon={Target} label="Difficulty" value={diff} />
         </div>
 
         <div className="mt-4 rounded-2xl border bg-card p-4 shadow-card text-xs space-y-1 text-muted-foreground">
@@ -66,9 +116,6 @@ function Preview({ quiz, onStart }: { quiz: Quiz; onStart: () => void }) {
           className="mt-5 w-full rounded-2xl bg-gradient-primary py-4 text-base font-semibold text-primary-foreground shadow-soft active:scale-[0.98]">
           Start quiz
         </button>
-        <Link to="/settings" className="mt-2 block text-center text-xs text-muted-foreground hover:text-foreground">
-          Adjust settings →
-        </Link>
       </main>
     </div>
   );
@@ -85,20 +132,19 @@ function Stat({ icon: Icon, label, value, sub }: { icon: any; label: string; val
 }
 
 function QuizRunner({
-  quiz, settings, onCancel,
-}: { quiz: Quiz; settings: ReturnType<typeof useSettings>; onCancel: () => void }) {
+  quiz, settings, limit, onCancel,
+}: { quiz: Quiz; settings: ReturnType<typeof useSettings>; limit: number; onCancel: () => void }) {
   const navigate = useNavigate();
   const startedAt = useRef(Date.now());
 
   const order = useMemo(() => {
     let idxs = quiz.questions.map((_, i) => i);
     if (settings.shuffleQuestions) idxs = shuffle(idxs);
-    if (settings.questionLimit > 0) idxs = idxs.slice(0, settings.questionLimit);
-    return idxs;
-  }, [quiz.id, settings.shuffleQuestions, settings.questionLimit]);
+    return idxs.slice(0, Math.max(1, Math.min(limit, idxs.length)));
+  }, [quiz.id, settings.shuffleQuestions, limit]);
 
   const choiceOrder = useMemo(
-    () => order.map((qi) => {
+    () => order.map(() => {
       const positions = [0, 1, 2, 3];
       return settings.shuffleChoices ? shuffle(positions) : positions;
     }),
