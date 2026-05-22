@@ -27,7 +27,7 @@ function Home() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("All");
-  const [activeDifficulty, setActiveDifficulty] = useState<string>("All");
+  
   const [confirm, setConfirm] = useState<Quiz | null>(null);
   const [storage, setStorage] = useState({ usage: 0, quota: 0 });
 
