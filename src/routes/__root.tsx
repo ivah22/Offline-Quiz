@@ -4,11 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
+import { ensureAdminSeeded, useSession } from "@/lib/auth";
 
 import appCss from "../styles.css?url";
+
 
 function NotFoundComponent() {
   return (
