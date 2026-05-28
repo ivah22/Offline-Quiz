@@ -1,5 +1,3 @@
-An offline quiz application designed for interactive learning and assessment with mobile-friendly functionality.
-
 Offline Quiz Application
 
 An interactive offline quiz application developed for educational and assessment purposes with responsive and user-friendly interfaces.
